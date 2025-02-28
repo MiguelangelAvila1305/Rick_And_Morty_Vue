@@ -27,11 +27,13 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
+import type { Character } from '../types/characters';
+
 
 const router = useRouter();
 const route = useRoute();
 const id = route.params.id;
-const character = ref();
+const character = ref<Character>();
 
 const loadCharacter = async () => {
   const response = await fetch(

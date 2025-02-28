@@ -5,26 +5,28 @@
     </div>
 
     <!-- Input para buscar por nombre -->
-   <div class="flex justify-center mt-8">
-    <div >
-      <input
-        v-model="searchName"
-        type="text"
-        placeholder="Buscar por nombre..."
-        class="p-2 border-2 border-gray-300 rounded-lg"
-      />
-    </div>
+    <div class="flex flex-col items-center space-y-5 mt-8">
+      <div>
+        <input
+          v-model="searchName"
+          type="text"
+          placeholder="Buscar por nombre..."
+          class="p-2 border-2 border-gray-300 rounded-lg"
+          @change="findCharacter"
+        />
+      </div>
 
-    <div class="space-x-4">
-      <button v-for="status in statusFilters" :key="status" 
-      :class="['bg-black text-white rounded-full p-2', selectedStatus === status? 'bg-blue-500' : 'bg-black'  ]"
-      @click="filterByStatus(status)"
-      > 
-        {{ status }}
-      </button>
+      <div class="space-x-4">
+        <button
+          v-for="status in statusFilters"
+          :key="status"
+          :class="['bg-black text-white rounded-full p-2', selectedStatus === status ? 'bg-blue-500' : 'bg-black']"
+          @click="filterByStatus(status)"
+        >
+          {{ status }}
+        </button>
+      </div>
     </div>
-    
-   </div>
 
     <!-- Paginación -->
     <div class="flex justify-center space-x-4 mt-8">
@@ -36,7 +38,7 @@
     <!-- Lista de personajes -->
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-7 mt-24 mx-10">
       <div
-        v-for="character in filteredCharacters"
+        v-for="character in characters"
         :key="character.id"
         class="rounded-2xl overflow-hidden shadow-2xl transition duration-300 hover:scale-105"
       >
@@ -50,38 +52,44 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import type { Character } from '../types/characters';
+
 
 const router = useRouter()
-const characters = ref([])
-const page = ref(1)
-const searchName = ref('') // Para el input de búsqueda
-const selectedStatus = ref('Todos') // Estado inicial: "Todos"
+const characters = ref<Character[]>([]) // Aplicar el tipo Character[]
+const page = ref<number>(1)
+const searchName = ref<string>('') // Para el input de búsqueda
+const selectedStatus = ref<string>('Todos') // Estado inicial: "Todos"
 
 // Opciones de filtro por estado
 const statusFilters = ['Todos', 'Alive', 'Dead', 'unknown']
 
 // Cargar personajes
 const loadCharacters = async () => {
-  const response = await fetch(`https://rickandmortyapi.com/api/character?page=${page.value}`)
-  const data = await response.json()
+  const response = await fetch( `https://rickandmortyapi.com/api/character/?name=${searchName.value}&status=${selectedStatus.value==="Todos"?"":selectedStatus.value}&page=${page.value}`)
+  const data = await response.json() // Aplicar el tipo ApiResponse
   characters.value = data.results
 }
 
+const findCharacter= ()=>{
+  loadCharacters()
+}
+
 // Filtrar personajes por nombre y estado
-const filteredCharacters = computed(() => {
-  return characters.value.filter((character) => {
-    const matchesName = character.name.toLowerCase().includes(searchName.value.toLowerCase())
-    const matchesStatus = selectedStatus.value === 'Todos' || character.status === selectedStatus.value
-    return matchesName && matchesStatus
-  })
-})
+// const filteredCharacters = computed(() => {
+//   return characters.value.filter((character: Character) => {
+//     const matchesName = character.name.toLowerCase().includes(searchName.value.toLowerCase())
+//     const matchesStatus = selectedStatus.value === 'Todos' || character.status === selectedStatus.value
+//     return matchesName && matchesStatus
+//   })
+// })
 
 // Cambiar el estado seleccionado
 const filterByStatus = (status: string) => {
   selectedStatus.value = status
-  console.log(selectedStatus.value)
+  loadCharacters()
 }
 
 // Paginación
